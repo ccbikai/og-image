@@ -1,3 +1,7 @@
+function isURL(url) {
+  return /^https?:/i.test(url)
+}
+
 export default {
 	async fetch(request, env, context) {
 		// 读取缓存
@@ -18,8 +22,18 @@ export default {
 			});
 		}
 		const siteURL = cacheUrl.href.replace(`${cacheUrl.origin}/`, '');
+		if (!isURL(siteURL)) {
+			return new Response(null, {
+				status: 400,
+			});
+		}
 		const dubRes = await fetch(`https://api.dub.co/metatags?url=${encodeURIComponent(siteURL)}`);
 		const { image } = await dubRes.json();
+		if (!isURL(image)) {
+			return new Response(null, {
+				status: 400,
+			});
+		}
 		const imageRes = await fetch(image, {
 			headers: {
 				'user-agent': request.headers.get('user-agent'),
@@ -36,6 +50,6 @@ export default {
 			context.waitUntil(cache.put(cacheKey, imageResClone.clone()));
 			return imageResClone;
 		}
-		return imageRes
+		return imageRes;
 	},
 };
