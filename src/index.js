@@ -1,5 +1,5 @@
 function isURL(url) {
-  return /^https?:/i.test(url)
+	return /^https?:/i.test(url)
 }
 
 export default {
@@ -28,10 +28,26 @@ export default {
 			});
 		}
 		const dubRes = await fetch(`https://api.dub.co/metatags?url=${encodeURIComponent(siteURL)}`);
-		const { image } = await dubRes.json();
+		let { image } = await dubRes.json();
+		console.log('dub image', siteURL, image);
+		if (!image) {
+			const res = await fetch(siteURL, {
+				headers: request.headers,
+				cf: {
+					cacheEverything: true,
+					cacheTtl: 86400,
+				}
+			});
+			const html = await res.text();
+			const match = html.match(/<meta[^>]*?property=["']og:image["'][^>]*?content=["']([^"']*?)["'][^>]*?>/i)
+				|| html.match(/<meta[^>]*?content=["']([^"']*?)["'][^>]*?property=["']og:image["'][^>]*?>/i);
+			image = match?.[1];
+			console.log('match image', siteURL, image);
+		}
+		console.log('image', siteURL, image);
 		if (!isURL(image)) {
 			return new Response(null, {
-				status: 400,
+				status: 501,
 			});
 		}
 		const imageRes = await fetch(image, {
