@@ -27,7 +27,13 @@ export default {
 				status: 400,
 			});
 		}
-		const dubRes = await fetch(`https://api.dub.co/metatags?url=${encodeURIComponent(siteURL)}`);
+		const dubRes = await fetch(`https://api.dub.co/metatags?url=${encodeURIComponent(siteURL)}`, {
+			headers: request.headers,
+			cf: {
+				cacheTtl: 604800,
+				cacheEverything: true,
+			},
+		});
 		let { image } = await dubRes.json();
 		console.log('dub image', siteURL, image);
 		if (!image) {
@@ -35,7 +41,7 @@ export default {
 				headers: request.headers,
 				cf: {
 					cacheEverything: true,
-					cacheTtl: 86400,
+					cacheTtl: 604800,
 				}
 			});
 			const html = await res.text();
@@ -51,8 +57,10 @@ export default {
 			});
 		}
 		const imageRes = await fetch(image, {
-			headers: {
-				'user-agent': request.headers.get('user-agent'),
+			headers: request.headers,
+			cf: {
+				cacheTtl: 604800,
+				cacheEverything: true,
 			},
 		});
 		if (imageRes.ok) {
